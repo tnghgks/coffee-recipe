@@ -11,6 +11,7 @@ async function finishBrew(page: Page, query = "?dose=20") {
   await page.clock.install();
   await page.goto(`/recipes/${RECIPE_ID}/brew${query}`);
   await page.getByRole("button", { name: "추출 시작" }).click();
+  await page.getByRole("button", { name: "타이머 시작" }).click();
   await page.clock.fastForward(170_000);
   await page.clock.runFor(100);
   await expect(page.getByRole("heading", { name: "추출 완료" })).toBeVisible();

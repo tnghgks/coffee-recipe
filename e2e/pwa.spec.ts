@@ -52,6 +52,7 @@ test("a saved recipe opens and brews in airplane mode", async ({ page, context }
   await page.getByRole("link", { name: "추출하기" }).click();
   await expect(page).toHaveURL(new RegExp(`/recipes/${RECIPE_ID}/brew`));
   await page.getByRole("button", { name: "추출 시작" }).click();
+  await page.getByRole("button", { name: "타이머 시작" }).click();
   await expect(page.getByTestId("brew-elapsed")).not.toHaveText("0:00", { timeout: 5_000 });
   await expect(page.getByTestId("brew-step")).toBeVisible();
 });

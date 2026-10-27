@@ -6,6 +6,7 @@ import {
   finishSession,
   idleSession,
   pauseSession,
+  readySession,
   resumeSession,
   startSession,
   toggleSession,
@@ -54,6 +55,20 @@ describe("brew session", () => {
 
     const finished = finishSession(session, 5_000);
     expect(toggleSession(finished, 6_000)).toBe(finished);
+  });
+
+  it("waits at 0:00 when ready and starts the clock on the tap", () => {
+    const ready = readySession(idleSession);
+    expect(ready.status).toBe("ready");
+    expect(elapsedMs(ready, 30_000)).toBe(0); // opening the brew screen doesn't start the clock
+    expect(pauseSession(ready, 30_000)).toBe(ready);
+    expect(finishSession(ready, 30_000)).toBe(ready);
+    expect(completeIfDue(ready, 999_999, 1_000)).toBe(ready);
+
+    const running = toggleSession(ready, 30_000);
+    expect(running.status).toBe("running");
+    expect(elapsedMs(running, 35_000)).toBe(5_000);
+    expect(readySession(running)).toBe(running);
   });
 
   it("ignores transitions that don't apply", () => {

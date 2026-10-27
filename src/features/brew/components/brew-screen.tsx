@@ -47,8 +47,15 @@ type BrewScreenProps = {
 const RENDER_INTERVAL_MS = 100;
 
 const statusHint = {
+  ready: "준비되면 탭해서 시작",
   running: "탭하면 일시정지",
   paused: "일시정지됨 · 탭해서 계속",
+} as const;
+
+const stageLabel = {
+  ready: "타이머 시작",
+  running: "일시정지",
+  paused: "계속",
 } as const;
 
 export function BrewScreen({ recipe, settings: serverSettings, note }: BrewScreenProps) {
@@ -81,7 +88,7 @@ export function BrewScreen({ recipe, settings: serverSettings, note }: BrewScree
   const segments = useMemo(() => brewSegments(scaled.steps, recipe.totalTimeS), [scaled.steps, recipe.totalTimeS]);
 
   const running = session.status === "running";
-  useWakeLock(running || session.status === "paused");
+  useWakeLock(session.status === "ready" || running || session.status === "paused");
   const wakeLockSupported = useWakeLockSupported();
 
   useAnimationFrame((now) => {
@@ -109,15 +116,15 @@ export function BrewScreen({ recipe, settings: serverSettings, note }: BrewScree
   const countdown = progress.secondsToNext !== null ? Math.ceil(progress.secondsToNext) : null;
   const recipeHref = `/recipes/${recipe.id}${brewSettingsQuery(settings, recipe)}`;
 
-  const start = () => {
+  // Opens the brew screen at 0:00; the clock waits for a tap on the stage so it starts with the pour.
+  const enterBrew = () => {
     beeper.unlock(); // must happen inside the gesture for iOS
     recordBrewStarted(); // install banner shows after a couple of brews
-    lastCue.current = null;
-    store.getState().toggle();
+    store.getState().ready();
   };
 
   const onStageTap = () => {
-    if (session.status !== "running" && session.status !== "paused") return;
+    if (session.status === "idle" || session.status === "finished") return;
     beeper.unlock();
     lastCue.current = null; // no cues for whatever was already true before the clock (re)starts
     store.getState().toggle();
@@ -171,7 +178,7 @@ export function BrewScreen({ recipe, settings: serverSettings, note }: BrewScree
           settings={settings}
           scaled={scaled}
           onChange={changeSettings}
-          onStart={start}
+          onStart={enterBrew}
           note={note}
         />
       ) : session.status === "finished" ? (
@@ -196,7 +203,7 @@ export function BrewScreen({ recipe, settings: serverSettings, note }: BrewScree
           <button
             type="button"
             onClick={onStageTap}
-            aria-label={running ? "일시정지" : "계속"}
+            aria-label={stageLabel[session.status]}
             className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-6 text-center outline-none select-none focus-visible:bg-accent/40"
           >
             <span className={cn("text-sm font-medium", running ? "text-muted-foreground" : "text-primary")}>
@@ -207,7 +214,7 @@ export function BrewScreen({ recipe, settings: serverSettings, note }: BrewScree
               segments={segments}
               currentIndex={progress.currentIndex}
               progress={progress.overallProgress}
-              paused={!running}
+              paused={session.status === "paused"}
               pulse={nextSoon}
             >
               {step && (

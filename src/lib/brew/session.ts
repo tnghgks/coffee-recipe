@@ -1,13 +1,15 @@
 /**
- * Brew timer state machine: idle → running ⇄ paused → finished.
+ * Brew timer state machine: idle → ready → running ⇄ paused → finished.
  *
+ * idle is the prep view (settings still editable); ready shows the brew screen at 0:00 and waits for
+ * a tap, so the clock starts when the pour does rather than when the screen opens.
  * Elapsed time is never counted by ticks. A session stores the time already banked plus the
  * monotonic instant (performance.now()) it last resumed, so elapsed = accumulated + (now − resumedAt).
  * Background tabs, throttled timers and dropped frames therefore cannot make the clock drift.
  * Every function takes `now` explicitly so tests can drive a fake clock.
  */
 
-export type BrewStatus = "idle" | "running" | "paused" | "finished";
+export type BrewStatus = "idle" | "ready" | "running" | "paused" | "finished";
 
 export type BrewSession = {
   status: BrewStatus;
@@ -24,8 +26,14 @@ export function elapsedMs(session: BrewSession, now: number): number {
   return session.accumulatedMs + Math.max(0, now - session.resumedAt);
 }
 
-export function startSession(session: BrewSession, now: number): BrewSession {
+/** Leaves the prep view for the brew screen without starting the clock. */
+export function readySession(session: BrewSession): BrewSession {
   if (session.status !== "idle") return session;
+  return { status: "ready", accumulatedMs: 0, resumedAt: null };
+}
+
+export function startSession(session: BrewSession, now: number): BrewSession {
+  if (session.status !== "idle" && session.status !== "ready") return session;
   return { status: "running", accumulatedMs: 0, resumedAt: now };
 }
 
@@ -39,10 +47,11 @@ export function resumeSession(session: BrewSession, now: number): BrewSession {
   return { status: "running", accumulatedMs: session.accumulatedMs, resumedAt: now };
 }
 
-/** Single tap control: start when idle, otherwise pause/resume. Finished sessions ignore taps. */
+/** Single tap control: start when idle/ready, otherwise pause/resume. Finished sessions ignore taps. */
 export function toggleSession(session: BrewSession, now: number): BrewSession {
   switch (session.status) {
     case "idle":
+    case "ready":
       return startSession(session, now);
     case "running":
       return pauseSession(session, now);

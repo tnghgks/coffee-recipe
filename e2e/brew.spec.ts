@@ -53,6 +53,12 @@ test("runs through the steps with pause and resume, then finishes", async ({ pag
   await expect(target).toHaveText("40");
   await expect(page.getByText("이번에 +40g 붓기")).toBeVisible();
 
+  // the clock waits for a tap after entering brew mode
+  await expect(page.getByText("준비되면 탭해서 시작")).toBeVisible();
+  await advance(page, 10_000);
+  await expect(elapsed).toHaveText("0:00");
+  await page.getByRole("button", { name: "타이머 시작" }).click();
+
   await advance(page, 41_000);
   await expect(stepLabel).toHaveText("1차 붓기");
   await expect(target).toHaveText("160");
@@ -86,6 +92,7 @@ test("runs through the steps with pause and resume, then finishes", async ({ pag
 test("elapsed time does not lag after time passes without frames (background tab)", async ({ page }) => {
   await page.goto(`${RECIPE}/brew`);
   await page.getByRole("button", { name: "추출 시작" }).click();
+  await page.getByRole("button", { name: "타이머 시작" }).click();
   await advance(page, 1_000);
 
   // Jump 75s without running any animation frames in between, as when the tab is hidden.
@@ -98,6 +105,7 @@ test("elapsed time does not lag after time passes without frames (background tab
 test("finish early from pause", async ({ page }) => {
   await page.goto(`${RECIPE}/brew`);
   await page.getByRole("button", { name: "추출 시작" }).click();
+  await page.getByRole("button", { name: "타이머 시작" }).click();
   await advance(page, 50_000);
   await page.getByRole("button", { name: "일시정지" }).click();
   await page.getByRole("button", { name: "추출 끝내기" }).click();

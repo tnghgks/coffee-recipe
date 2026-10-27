@@ -50,6 +50,18 @@ describe("brew store", () => {
     expect(notifications).toBe(0);
   });
 
+  it("does not count time while ready", () => {
+    const { store, advance } = setup();
+    store.getState().ready();
+    advance(20_000);
+    expect(store.getState().session.status).toBe("ready");
+    expect(store.getState().elapsedMs()).toBe(0);
+
+    store.getState().toggle(); // the tap that starts the clock
+    advance(3_000);
+    expect(store.getState().elapsedMs()).toBe(3_000);
+  });
+
   it("resets to idle", () => {
     const { store, advance } = setup();
     store.getState().start();

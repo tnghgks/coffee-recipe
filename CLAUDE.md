@@ -96,7 +96,7 @@ e2e/                Playwright 테스트
 - E2E는 로컬 Supabase 시드에 의존한다. CI E2E 잡도 Supabase를 띄우고 `.env.local`을 만든다.
 
 ### 추출 타이머 (Phase 2-A에서 정함)
-- 상태 머신은 `src/lib/brew/session.ts`: idle → running ⇄ paused → finished. 세션은 "쌓인 ms + 마지막 재개 시각(performance.now())"만 저장하고 경과 시간은 매번 계산한다. 모든 함수는 `now`를 인자로 받는다.
+- 상태 머신은 `src/lib/brew/session.ts`: idle → ready → running ⇄ paused → finished. idle은 준비 화면, ready는 추출 화면을 0:00으로 띄워 두고 탭을 기다린다. 세션은 "쌓인 ms + 마지막 재개 시각(performance.now())"만 저장하고 경과 시간은 매번 계산한다. 모든 함수는 `now`를 인자로 받는다.
 - 단계 위치는 `src/lib/brew/progress.ts`의 `getBrewProgress(steps, totalTimeS, elapsedS)`. 마지막 붓기 이후~총 시간은 마지막 단계의 구간이다. 끝 시각은 `brewEndS`(총 시간과 마지막 단계 시작 중 큰 값).
 - `src/features/brew/store.ts`의 `createBrewStore(clock)`는 위 함수에 `now`만 넣어 주는 얇은 래퍼다. 화면마다 인스턴스를 만들고(전역 싱글턴 아님), 매 프레임 `completeIfDue(endMs)`로 종료를 판정한다.
 
@@ -177,7 +177,7 @@ e2e/                Playwright 테스트
 
 ### 추출 준비·링 타이머 (추출 준비 화면 작업에서 정함)
 - 비율 계산기는 레시피 상세가 아니라 추출 화면의 준비 단계(idle, `BrewPrep`)에 있다. 상세는 레시피 그대로(원두·비율·물 칩 + 단계)와 "추출하기" 링크만.
-- 준비 화면은 "추출 시작" 버튼으로만 시작한다 (설정 컨트롤이 있어 화면 전체 탭은 시작 후에만: 일시정지/계속). 시작 후에는 설정을 못 바꾼다. "다시 내리기"는 준비 화면으로 돌아간다.
+- 준비 화면의 "추출 시작" 버튼은 추출 화면으로만 넘긴다(ready). 타이머는 링 화면을 탭해야 시작한다 (물 붓기와 맞추려고). 화면 전체 탭은 추출 화면에서만: 시작/일시정지/계속. 추출 화면에 들어가면 설정을 못 바꾼다. "다시 내리기"는 준비 화면으로 돌아간다. E2E는 "추출 시작" 뒤에 "타이머 시작" 버튼을 누른다.
 - 추출 중 화면은 링(`BrewRing`): 총 시간을 단계별 호로 나눈다(`brewSegments`, 순수 함수). 가운데는 목표 g, 다음 붓기 3초 전부터 링 머리가 깜박이고 카운트다운이 커진다.
 - Next가 떠난 추출 화면을 숨긴 채 살려 두므로, 레시피로 돌아가는 링크는 세션을 reset한다 (안 하면 다시 들어왔을 때 이전 추출이 이어진다).
 

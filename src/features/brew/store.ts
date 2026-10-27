@@ -6,6 +6,7 @@ import {
   finishSession,
   idleSession,
   pauseSession,
+  readySession,
   resumeSession,
   startSession,
   toggleSession,
@@ -15,6 +16,8 @@ import {
 /** Thin wrapper: all timing rules live in src/lib/brew/session.ts; the store only supplies `now`. */
 export type BrewStore = {
   session: BrewSession;
+  /** Prep → brew screen; the clock waits for `start`/`toggle`. */
+  ready: () => void;
   start: () => void;
   pause: () => void;
   resume: () => void;
@@ -40,6 +43,7 @@ export function createBrewStore(now: Clock = monotonicClock) {
 
     return {
       session: idleSession,
+      ready: () => apply(readySession),
       start: () => apply(startSession),
       pause: () => apply(pauseSession),
       resume: () => apply(resumeSession),
