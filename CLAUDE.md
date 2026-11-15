@@ -13,7 +13,7 @@ Zod, React Hook Form, Zustand, TanStack Query, Vitest, Playwright, pnpm
 | --- | --- |
 | Node | 22 (`.nvmrc`) |
 | pnpm | 12.9.1 (`packageManager`) |
-| next | 16.4.0 (Cache Components·Partial Prefetching 켜짐) |
+| next | 16.4.6 (Cache Components·Partial Prefetching 켜짐) |
 | react / react-dom | 19.3.0 |
 | typescript | 5.9.3 |
 | tailwindcss | 4.3.3 |
