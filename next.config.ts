@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       { protocol: "http", hostname: "**.kakaocdn.net" },
     ],
   },
+  experimental: {
+    agentUpgrade: "security",
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
